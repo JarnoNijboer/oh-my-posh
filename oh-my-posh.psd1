@@ -61,6 +61,7 @@ FunctionsToExport = @('Show-Colors',
                       'Get-VirtualEnvName',
                       'Test-NotDefaultUser',
                       'Test-Administrator',
+                      'Get-UserName',
                       'Get-ComputerName',
                       'Set-Newline',
                       'Get-ThemesLocation')

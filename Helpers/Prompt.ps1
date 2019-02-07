@@ -19,6 +19,10 @@ function Test-PsCore {
 }
 
 function Get-Home {
+    if (Get-Variable 'DefaultHome' -Scope Global -ErrorAction 'Ignore') {
+        return $DefaultHome.TrimEnd('/','\')
+    }
+
     # On Unix systems, $HOME comes with a trailing slash, unlike the Windows variant
     return $HOME.TrimEnd('/','\')
 }
@@ -31,6 +35,18 @@ function Test-Administrator {
     } else {
         return ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')
     }
+}
+
+function Get-UserName {
+    if (Get-Variable 'DefaultUser' -Scope Global -ErrorAction 'Ignore') {
+        return $DefaultUser
+    }
+
+    if ($PSVersionTable.Platform -eq 'Unix') {
+        return (whoami)
+    }
+
+    return (whoami).Split('\')[-1]
 }
 
 function Get-ComputerName {
@@ -65,18 +81,18 @@ function Get-Drive {
 
     $provider = Get-Provider -path $dir.Path
 
-    if($provider -eq 'FileSystem') {
+    if ($provider -eq 'FileSystem') {
         $homedir = Get-Home
-        if($dir.Path.StartsWith($homedir)) {
+        if ($dir.Path.StartsWith($homedir)) {
             return $sl.PromptSymbols.HomeSymbol
         }
-        elseif($dir.Path.StartsWith('Microsoft.PowerShell.Core')) {
+        elseif ($dir.Path.StartsWith('Microsoft.PowerShell.Core')) {
             $parts = $dir.Path.Replace('Microsoft.PowerShell.Core\FileSystem::\\','').Split('\')
             return "$($parts[0])$($sl.PromptSymbols.PathSeparator)$($parts[1])$($sl.PromptSymbols.PathSeparator)"
         }
         else {
             $root = $dir.Drive.Name
-            if($root) {
+            if ($root) {
                 return $root + ':'
             }
             else {
@@ -121,12 +137,12 @@ function Get-ShortPath {
 
     $provider = Get-Provider -path $dir.path
 
-    if($provider -eq 'FileSystem') {
+    if ($provider -eq 'FileSystem') {
         $result = @()
         $currentDir = Get-Item $dir.path -Force
 
-        while( ($currentDir.Parent) -And ($currentDir.FullName -ne (Get-Home)) ) {
-            if( (Test-IsVCSRoot -dir $currentDir) -Or ($result.length -eq 0) ) {
+        while ( ($currentDir.Parent) -And ($currentDir.FullName -ne (Get-Home)) ) {
+            if ( (Test-IsVCSRoot -dir $currentDir) -Or ($result.length -eq 0) ) {
                 $result = ,$currentDir.Name + $result
             }
             else {
@@ -135,7 +151,8 @@ function Get-ShortPath {
 
             $currentDir = $currentDir.Parent
         }
-        $shortPath =  $result -join $sl.PromptSymbols.PathSeparator
+
+        $shortPath = $result -join $sl.PromptSymbols.PathSeparator
         if ($shortPath) {
             $drive = (Get-Drive -dir $dir)
             return "$drive$($sl.PromptSymbols.PathSeparator)$shortPath"
@@ -151,6 +168,7 @@ function Get-ShortPath {
         return $dir.path.Replace((Get-Drive -dir $dir), '')
     }
 }
+
 function Test-VirtualEnv {
     if ($env:VIRTUAL_ENV) {
         return $true

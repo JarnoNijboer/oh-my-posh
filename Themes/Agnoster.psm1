@@ -1,4 +1,5 @@
 #requires -Version 2 -Modules posh-git
+# . "$PSScriptRoot\Helpers\Prompt.ps1"
 
 function Write-Theme {
 
@@ -24,9 +25,8 @@ function Write-Theme {
     }
 
     $user = $sl.CurrentUser
-    $computer = [System.Environment]::MachineName
     if (Test-NotDefaultUser($user)) {
-        $prompt += Write-Prompt -Object "$user@$computer " -ForegroundColor $sl.Colors.SessionInfoForegroundColor -BackgroundColor $sl.Colors.SessionInfoBackgroundColor
+        $prompt += Write-Prompt -Object "$user@$(Get-ComputerName)" -ForegroundColor $sl.Colors.SessionInfoForegroundColor -BackgroundColor $sl.Colors.SessionInfoBackgroundColor
     }
 
     if (Test-VirtualEnv) {
